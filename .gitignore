@@ -1,2 +1,10 @@
 # history
 .history
+
+# env
+.env
+
+#test
+test.js
+
+node_modules

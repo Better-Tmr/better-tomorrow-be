@@ -12,8 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/translate": "^9.0.1",
     "@vitalets/google-translate-api": "^9.2.1",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "google-translate-api": "^2.3.0",
     "http-proxy-agent": "^7.0.2",

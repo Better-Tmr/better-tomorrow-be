@@ -1,42 +1,27 @@
-console.log("🔥 이 app.js가 진짜 실행됨!");
 import express from "express";
 import cors from "cors";
-import { translate } from "@vitalets/google-translate-api";
 import { getSubtitles } from "youtube-captions-scraper";
-import { HttpProxyAgent } from "http-proxy-agent";
+import dotenv from "dotenv";
+import { v2 as translate } from "@google-cloud/translate";
 
-// const agent = new HttpProxyAgent("http://43.130.47.134:8080"); // temporary proxy - 현재 US 사용 중
-const agent = new HttpProxyAgent("http://15.223.105.115"); // temporary proxy - 현재 US 사용 중
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3128;
 
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
 
-app.post("/translate-proxy", async (req, res) => {
-  const { text, to } = req.body;
+const corsOptions = {
+  origin: "*",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"],
+};
 
-  if (!text || !to) {
-    return res.status(400).json({ error: "Missing: text and to" });
-  }
+app.use(cors(corsOptions));
 
-  try {
-    const result = await Promise.race([
-      translate(text, { to }),
-      new Promise((_, reject) => setTimeout(() => reject("Timeout"), 5000)), // 5초 타임아웃 설정
-    ]);
-    res.json({ translatedText: result.text });
-    console.log(`Translated: ${text} to ${result.text}`);
-  } catch (error) {
-    console.error("Translation error:", error);
-    res.status(500).json({
-      error:
-        error === "Timeout"
-          ? "Translation timed out"
-          : "Error while translating",
-    });
-  }
+const translateClient = new translate.Translate({
+  key: process.env.GOOGLE_API_KEY,
 });
 
 app.post("/translate", async (req, res) => {
@@ -47,12 +32,12 @@ app.post("/translate", async (req, res) => {
   }
 
   try {
-    const result = await translate(text, { to });
-    res.json({ translatedText: result.text });
-    console.log(`Translated: ${text} to ${result.text}`);
+    const [translation] = await translateClient.translate(text, to);
+    console.log(`Translated: '${text}','${translation}'`);
+    res.json({ translatedText: translation });
   } catch (error) {
     console.error("Translation error:", error);
-    res.status(500).json({ error: "Error while translating" });
+    res.status(500).json({ error: "Translation failed" });
   }
 });
 
@@ -72,6 +57,7 @@ app.get("/", (req, res) => {
   res.send("홈페이지입니다!");
 });
 
+// 서버 실행
 app.listen(port, () => {
   console.log(`서버 실행중: http://localhost:${port}`);
 });
